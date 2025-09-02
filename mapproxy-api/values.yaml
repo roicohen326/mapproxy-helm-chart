@@ -1,0 +1,65 @@
+# MapProxy API Service (runs separately)
+mapproxyApi:
+  image:
+    repository: kartoza/mapproxy
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8080
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  # Configuration injected directly as environment variables
+  config:
+    openapiFilePath: "./openapi3.yaml"
+    openapiBasePath: "/docs"
+    openapiRawPath: "/api"
+    logLevel: "info"
+    serverPort: "8080"
+    initMode: true
+    configProvider: "fs"
+    gracefulReloadMaxSeconds: 300
+    pollFrequencyMs: 5000
+
+# Tile Serving Service (MapProximator + MapProxy in same pod)
+tileServing:
+  # MapProximator container specs
+  mapproxinator:
+    image:
+      repository: kartoza/mapproxy
+      tag: latest
+      pullPolicy: IfNotPresent
+    port: 8082
+    upstreamUrl: "http://localhost:8081"
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+  
+  # MapProxy container specs  
+  mapproxy:
+    image:
+      repository: kartoza/mapproxy
+      tag: latest
+      pullPolicy: IfNotPresent
+    port: 8081
+    resources:
+      limits:
+        cpu: 300m
+        memory: 512Mi
+      requests:
+        cpu: 150m
+        memory: 256Mi
+  
+  service:
+    type: ClusterIP
+    mapproxyPort: 8081
+    mapproxyinatorPort: 8082

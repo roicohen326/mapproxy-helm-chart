@@ -1,0 +1,11 @@
+# Helm
+*.tgz
+charts/
+.helmignore
+
+# Generated files
+generated-yaml/
+
+# OS files
+.DS_Store
+Thumbs.db

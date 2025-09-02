@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "mapproxy-api.api-fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "mapproxy-api.name" . }}-api
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "mapproxy-api.name" . }}-api
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "mapproxy-api.name" . }}-api
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: api
+    spec:
+      containers:
+        - name: mapproxy-api
+          image: "{{ .Values.mapproxyApi.image.repository }}:{{ .Values.mapproxyApi.image.tag }}"
+          imagePullPolicy: {{ .Values.mapproxyApi.image.pullPolicy }}
+          ports:
+            - name: api
+              containerPort: {{ .Values.mapproxyApi.service.port }}
+          env:
+            - name: OPENAPI_FILE_PATH
+              value: "{{ .Values.mapproxyApi.config.openapiFilePath }}"
+            - name: OPENAPI_BASE_PATH
+              value: "{{ .Values.mapproxyApi.config.openapiBasePath }}"
+            - name: OPENAPI_RAW_PATH
+              value: "{{ .Values.mapproxyApi.config.openapiRawPath }}"
+            - name: LOG_LEVEL
+              value: "{{ .Values.mapproxyApi.config.logLevel }}"
+            - name: SERVER_PORT
+              value: "{{ .Values.mapproxyApi.config.serverPort }}"
+            - name: INIT_MODE
+              value: "{{ .Values.mapproxyApi.config.initMode }}"
+            - name: CONFIG_PROVIDER
+              value: "{{ .Values.mapproxyApi.config.configProvider }}"
+            - name: GRACEFUL_RELOAD_MAX_SECONDS
+              value: "{{ .Values.mapproxyApi.config.gracefulReloadMaxSeconds }}"
+            - name: POLL_FREQUENCY_MS
+              value: "{{ .Values.mapproxyApi.config.pollFrequencyMs }}"
+          resources:
+            {{- toYaml .Values.mapproxyApi.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.mapproxyApi.service.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.mapproxyApi.service.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 15

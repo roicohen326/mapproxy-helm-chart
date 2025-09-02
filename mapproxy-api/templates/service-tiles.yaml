@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "mapproxy-api.tiles-fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "mapproxy-api.name" . }}-tiles
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: tiles
+spec:
+  type: {{ .Values.tileServing.service.type }}
+  selector:
+    app.kubernetes.io/name: {{ include "mapproxy-api.name" . }}-tiles
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: tiles
+  ports:
+    - name: mapproxy
+      port: {{ .Values.tileServing.service.mapproxyPort }}
+      targetPort: {{ .Values.tileServing.service.mapproxyPort }}
+    - name: mapproxinator
+      port: {{ .Values.tileServing.service.mapproxyinatorPort }}
+      targetPort: {{ .Values.tileServing.service.mapproxyinatorPort }}

@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "mapproxy-api.tiles-fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "mapproxy-api.name" . }}-tiles
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: tiles
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "mapproxy-api.name" . }}-tiles
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: tiles
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "mapproxy-api.name" . }}-tiles
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: tiles
+    spec:
+      containers:
+        - name: mapproxinator
+          image: "{{ .Values.tileServing.mapproxinator.image.repository }}:{{ .Values.tileServing.mapproxinator.image.tag }}"
+          imagePullPolicy: {{ .Values.tileServing.mapproxinator.image.pullPolicy }}
+          ports:
+            - name: proxy
+              containerPort: {{ .Values.tileServing.mapproxinator.port }}
+          env:
+            - name: UPSTREAM_URL
+              value: "{{ .Values.tileServing.mapproxinator.upstreamUrl }}"
+          resources:
+            {{- toYaml .Values.tileServing.mapproxinator.resources | nindent 12 }}
+        
+        - name: mapproxy
+          image: "{{ .Values.tileServing.mapproxy.image.repository }}:{{ .Values.tileServing.mapproxy.image.tag }}"
+          imagePullPolicy: {{ .Values.tileServing.mapproxy.image.pullPolicy }}
+          ports:
+            - name: tiles
+              containerPort: {{ .Values.tileServing.mapproxy.port }}
+          resources:
+            {{- toYaml .Values.tileServing.mapproxy.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.tileServing.mapproxy.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
